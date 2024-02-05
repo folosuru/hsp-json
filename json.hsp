@@ -1,7 +1,3 @@
-#const true 1
-#const false 0
-
-#addition "WrapCall.as"
 #ifdef HSP_JSON_FILE_GUARD
 #else
 #define global HSP_JSON_FILE_GUARD 0
