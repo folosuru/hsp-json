@@ -169,29 +169,29 @@
 #module JsonArrayChild value, type
 #global
 
-#module Json_Array type,child, ElementsCount
+#module Json_Array type,child, element_count
     #modinit
         type = JSON_TYPENAME_ARRAY
-        ElementsCount = 0
+        element_count = 0
         return
 
     #modfunc pushPrimitiveValue var value
         newmod child, JsonArrayChild
-        create_primitive_val child(ElementsCount), value
-        ElementsCount++
-        return (ElementsCount - 1) // return index
+        create_primitive_val child(element_count), value
+        element_count++
+        return (element_count - 1) // return index
     
     #modfunc pushMap
         newmod child, JsonArrayChild
-        create_JSON_Map child(ElementsCount)
-        ElementsCount++
-        return (ElementsCount - 1) // return index
+        create_JSON_Map child(element_count)
+        element_count++
+        return (element_count - 1) // return index
 
     #modfunc pushArray
         newmod child, JsonArrayChild
-        create_JSON_Array child(ElementsCount)
-        ElementsCount++
-        return (ElementsCount - 1) // return index
+        create_JSON_Array child(element_count)
+        element_count++
+        return (element_count - 1) // return index
         
     #modfunc local get var out_, int index
         getValue@JSON_Value_wrapper child(index), out_
@@ -199,7 +199,7 @@
 
     #modcfunc foreach_array var value_out, var loop_var
         total_count = lpeek(loop_var,0)
-        if (total_count >= ElementsCount) {
+        if (total_count >= element_count) {
             return 0
         }
         get@Json_Array thismod,value_out, total_count
@@ -237,7 +237,7 @@
         out = value
         return
 #global
-#module JSON_container_util type
+#module JSON_container_util type, child, element_count
     #modcfunc getJsonContainerType
         return type
 
