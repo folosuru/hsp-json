@@ -159,7 +159,7 @@
             if (cnt != 0) {
                 dump_result = dump_result + ","
             }
-            dump_result = dump_result + dump_json(key) + ":" + dump_json(val)
+            dump_result = dump_result + dump@JSON(key) + ":" + dump@JSON(val)
         loop
         dump_result = dump_result + "}"
         return dump_result
@@ -247,18 +247,7 @@
         } else : if (getJsonContainerType(mod_) = JSON_TYPENAME_ARRAY) {
             return dump_json_array@Json_Array(mod_)
         }
-        return 
-
-    #defcfunc dump_json var value, local local_val
-        local_val = value
-        if (vartype(local_val) = 5) {
-            return dump_json_container(local_val)
-        }
-        if (vartype(local_val) = 2)  {// string
-            return "\"" + local_val + "\""
-        }
-        return str(local_val)
-        
+        return         
     #deffunc json_start_foreach var loop_val
         sdim loop_val, 9
         return
@@ -445,6 +434,16 @@
         }
         loop
         return
+
+    #defcfunc local dump var value, local local_val
+        local_val = value
+        if (vartype(local_val) = 5) {
+            return dump_json_container(local_val)
+        }
+        if (vartype(local_val) = 2)  {// string
+            return "\"" + local_val + "\""
+        }
+        return str(local_val)
 
 #global
 #endif
