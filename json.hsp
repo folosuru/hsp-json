@@ -1,6 +1,11 @@
 #ifdef HSP_JSON_FILE_GUARD
 #else
 #define global HSP_JSON_FILE_GUARD 0
+
+#const global JSON_TYPENAME_PRIMITIVE 0
+#const global JSON_TYPENAME_OBJECT 1
+#const global JSON_TYPENAME_ARRAY 2
+
 #module hash_util
     #const global hash_max_value 256
     #defcfunc Hash var hash_value
@@ -24,11 +29,6 @@
         swend
         return 0
 #global
-
-#const global JSON_TYPENAME_PRIMITIVE 0
-#const global JSON_TYPENAME_MAP 1
-#const global JSON_TYPENAME_ARRAY 2
-
 #module JSON_Map_KV value, type, key
     #modinit var key_
         key = key_
@@ -78,7 +78,7 @@
 
 #module JSON_Object type, child, element_count
 #modinit
-    type = 1
+    type = JSON_TYPENAME_OBJECT
     element_count = 0
     repeat hash_max_value + 1
         newmod child,JSON_Map_KV_list
@@ -172,7 +172,7 @@
 
 #module Json_Array type,child, ElementsCount
     #modinit
-        type = 2
+        type = JSON_TYPENAME_ARRAY
         ElementsCount = 0
         return
 
@@ -243,9 +243,9 @@
         return type
 
     #defcfunc dump_json_container var mod_
-        if (getJsonContainerType(mod_) = 1) { // map
+        if (getJsonContainerType(mod_) = JSON_TYPENAME_OBJECT) { // object
             return dump_json_map@JSON_Object(mod_)
-        } else {
+        } else : if (getJsonContainerType(mod_) = JSON_TYPENAME_ARRAY) {
             return dump_json_array@Json_Array(mod_)
         }
         return 
@@ -381,7 +381,7 @@
     // 1 => not found key
     // 2 => wait for "," or bracket close
     // 3 => wait for ":"
-    if (getJsonContainerType(current_container)  = 1) {
+    if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
         key_empty_flag = 1
     } else {
         key_empty_flag = 0
@@ -417,7 +417,7 @@
     if (current_char = '{') {
         //print "nest1{ : " + count
         nest_level++
-        if (getJsonContainerType(current_container) = 1) {
+        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
             if ( key_empty_flag = 1 ) {
                 dialog "parse error: expext key {}"
             }
@@ -435,7 +435,7 @@
     if (current_char = '[') {
         //print "nest1[ : " + count
         nest_level++
-        if (getJsonContainerType(current_container) = 1) {    
+        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {    
             if ( key_empty_flag = 1 ) {
                 dialog "parse error: expext key in insert []"
             }
@@ -451,10 +451,10 @@
         continue
     }
     if (current_char = '}' or current_char = ']') {
-        if (getJsonContainerType(current_container) = 0 and key_empty_flag != 0) {
+        if (getJsonContainerType(current_container) = JSON_TYPENAME_PRIMITIVE and key_empty_flag != 0) {
             dialog "parse error: unexpected } or ]"
         }
-        if (getJsonContainerType(current_container) = 1) {
+        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
             key_empty_flag = 1
         } else {
             key_empty_flag = 0
@@ -463,7 +463,7 @@
     }
 
     read_str = parse_value()
-    if (getJsonContainerType(current_container) = 1) {
+    if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
         if (key_empty_flag = 1) {
             key = read_str
             key_empty_flag = 3
