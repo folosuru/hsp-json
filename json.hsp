@@ -483,68 +483,6 @@
     continue
 
 loop
-
 return
-
 #global
-
-newmod parser, JSON, JSON_CRATE_PARSE, {"{
-    "name" : "Taro",
-    "age" : 13 
-}"}
-get@JSON parser, data
-json_start_foreach loop_var
-repeat
-if (foreach_object(data,key, val,loop_var) = 0) { break }
-print key + " => " + val
-loop
-
-stop
-newmod parser, JSON, JSON_CRATE_PARSE, {"{
-        "name" : "Taro",
-        "age" : 13 
-    }"}
-get@JSON parser, data
-get@JSON_Object data, out, "name"
-print out
-stop
-
-
-newmod a,JSON_Object
-key = "tanaka"
-val = 21
-insertPrimitiveValue a,key,val
-
-key = 24
-val = 5
-insertPrimitiveValue a,key,val
-
-key = 11
-insertMap a, key
-get@JSON_Object a, out, key
-
-key = 5
-val = "hoge"
-insertPrimitiveValue out,key, val
-get@JSON_Object out, result, key
-print "key :" + key + "=>" + result
-
-key = "tanaka"
-get@JSON_Object a,out, key
-print "key :" + key + "=>" + out
-v = "CD"
-
-//parse_str_test "{\"AB\": \"hoge\" , \"EF\" : \"foo\" }"
-print "----parse test----"
-newmod parser, JSON,1, "{\"AB\": \"hoge\" , \"EF\" : [ { \"hoge\" : \"fuga\" }, \"piyo\", 13 ]}"
-get@JSON parser, out
-/*
-json_start_foreach loop_var
-repeat
-if (foreach_object(out,key, val,loop_var) = 0) { break }
-    print "" +key+ "=>" + val
-loop*/
-newmod parser2, JSON,1 , dump_json(out)
-get@JSON parser2, out2 
-print dump_json(out2)
 #endif
