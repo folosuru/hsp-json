@@ -8,15 +8,19 @@
 
 #module hash_util
     #const global hash_max_value 256
+    #defcfunc Hash_string str value_
+        hash_value_ = value_
+        result = 0
+        flag = 0
+        repeat strlen(hash_value_)
+            poke result, 0, peek(result, 0) ^ peek(hash_value_, cnt)
+        loop
+        return result
+
     #defcfunc Hash var hash_value
         switch vartype(hash_value)
             case 2 // string
-                result = 0
-                flag = 0
-                repeat strlen(hash_value)
-                    poke result, 0, peek(result, 0) ^ peek(hash_value, cnt)
-                loop
-                return result
+                return Hash_string(hash_value)
             swbreak
             case 3 // double
                 return peek(hash_value,6)
@@ -30,7 +34,7 @@
         return 0
 #global
 #module JSON_Map_KV value, type, key
-    #modinit var key_
+    #modinit str key_
         key = key_
         return
 
@@ -46,7 +50,7 @@
     #modcfunc local getSize
         return ElementCount
 
-    #modfunc create_KV var key
+    #modfunc create_KV str key
         ElementCount++
         newmod values,JSON_Map_KV, key
         return
@@ -55,7 +59,7 @@
         out = values(index)
         return
 
-    #modfunc getKV var out,var key_
+    #modfunc getKV var out, str key_
         out_f = 1
         if (ElementCount != 0) {
             repeat ElementCount /* なんかforeach にすると動かないんだけどなんで？ */
@@ -67,11 +71,7 @@
             loop
         }
         if (out_f = 1) {
-            if (vartype(key_) = 2) { // string
-                dialog "Error in Reading JSON: key \"" + key_ + "\" not found", 1
-            } else {
-                dialog "Error in Reading JSON: key " + key_ + " not found", 1
-            }
+            dialog "Error in Reading JSON: key \"" + key_ + "\" not found", 1
         }
         return
 #global
@@ -85,45 +85,44 @@
     loop
     return
 
-#modfunc insertPrimitiveValueR var key, var value, var out
-    key_hash = Hash(key)
+#modfunc insertPrimitiveValueR str key, var value, var out
+    key_hash = Hash_string(key)
     create_KV child(key_hash), key
     getKV child(key_hash), out, key
     create_primitive_val out,value
     element_count++
     return
 
-#modfunc insertMapR var key, var out
-    key_hash = Hash(key)
+#modfunc insertMapR str key, var out
+    key_hash = Hash_string(key)
     create_KV child(key_hash), key
     getKV child(key_hash), out, key
     create_JSON_Map out
     element_count++
     return
 
-#modfunc insertArrayR var key, var out
-    key_hash = Hash(key)
+#modfunc insertArrayR str key, var out
+    key_hash = Hash_string(key)
     create_KV child(key_hash), key
     getKV child(key_hash), out, key
     create_JSON_Array out
     element_count++
     return
 
-#modfunc insertPrimitiveValue var key, var value
+#modfunc insertPrimitiveValue str key, var value
     insertPrimitiveValueR thismod, key, value, tmp
     return
 
-#modfunc insertMap var key
+#modfunc insertMap str key
     insertMapR thismod, key, tmp
     return
 
-#modfunc insertArray var key
+#modfunc insertArray str key
     insertArrayR thismod, key, tmp
     return
 
 #modfunc local get var out_, str key_
-    key_var = key_
-    getKV child(Hash(key_var)), out_kv, key_var
+    getKV child(Hash_string(key_)), out_kv, key_
     getValue@JSON_Value_wrapper out_kv, out_
     return
 
@@ -360,14 +359,14 @@
     current_container = current_
     count = count_
 
-    // 0 => found key
-    // 1 => not found key
-    // 2 => wait for "," or bracket close
-    // 3 => wait for ":"
+    #enum FINDING_VALUE = 0
+    #enum FINDING_KEY
+    #enum FINGING_COMMA_OR_BRACKET_CLOSE
+    #enum FINDINF_CORON
     if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
-        key_empty_flag = 1
+        parse_phase = FINDING_KEY
     } else {
-        key_empty_flag = 0
+        parse_phase = FINDING_VALUE
     }
     // 1 => map
     // 2 => array
@@ -383,23 +382,23 @@
         if (current_char = ' ' or current_char = 10 /*LF*/ or current_char = 13 /*CR*/ or current_char = '\t')  {
             continue
         }
-    if (current_char = ':' and key_empty_flag = 3) {
-        key_empty_flag = 0
+    if (current_char = ':' and parse_phase = 3) {
+        parse_phase = FINDING_VALUE
         continue
     }
 
-    if (current_char = ',' and key_empty_flag = 2) {
+    if (current_char = ',' and parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE) {
         if (getJsonContainerType(current_container) = 1) {
-            key_empty_flag = 1
+            parse_phase = FINDING_KEY
         } else {
-            key_empty_flag = 0
+            parse_phase = FINDING_VALUE
         }
         continue
     }
     if (current_char = '{') {
         nest_level++
         if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
-            if ( key_empty_flag = 1 ) {
+            if ( parse_phase = FINDING_KEY ) {
                 dialog "parse error: expext key {}"
             }
             insertMapR current_container, key, new_nest_kv
@@ -410,13 +409,13 @@
             get@Json_Array current_container, new_nest, stat
             parse json_data, count, new_nest
         }
-        key_empty_flag = 2
+        parse_phase = 2
         continue
     }
     if (current_char = '[') {
         nest_level++
         if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {    
-            if ( key_empty_flag = 1 ) {
+            if ( parse_phase = FINDING_KEY ) {
                 dialog "parse error: expext key in insert []"
             }
             insertArrayR current_container, key, new_nest_kv
@@ -427,34 +426,29 @@
             get@Json_Array current_container, new_nest, stat
             parse json_data, count, new_nest
         }
-        key_empty_flag = 2
+        parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
         continue
     }
     if (current_char = '}' or current_char = ']') {
-        if (getJsonContainerType(current_container) = JSON_TYPENAME_PRIMITIVE and key_empty_flag != 0) {
+        if (getJsonContainerType(current_container) = JSON_TYPENAME_PRIMITIVE and parse_phase != 0) {
             dialog "parse error: unexpected } or ]"
-        }
-        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
-            key_empty_flag = 1
-        } else {
-            key_empty_flag = 0
         }
         break
     }
 
     read_str = parse_value()
     if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
-        if (key_empty_flag = 1) {
+        if (parse_phase = FINDING_KEY) {
             key = read_str
-            key_empty_flag = 3
+            parse_phase = FINDINF_CORON
         } else {
             insertPrimitiveValue current_container, key, read_str
-            key_empty_flag = 2
+            parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
             continue
         }
     } else {
         pushPrimitiveValue current_container, read_str
-        key_empty_flag = 2
+        parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
     }
     continue
 
