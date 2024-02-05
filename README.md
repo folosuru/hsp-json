@@ -23,12 +23,17 @@ repeat
     print key + " => " + val
 loop
 ```
+
+[雑に書いたドキュメント](docs/index.md)
 ## めんどくさくて実装してないリスト
 ### 数値
 - 数値の指数表記（例：`8.984e+8`）
 ### 文字列
 - `\uXXXX`リテラル（Unicode文字）
+### Object/Array
+- 要素の削除
+- 内容も含めたクローン
 ### 他の値
-- nullとbool型
+- nullとbool型の実装
 ### その他
 - JSONの整形
