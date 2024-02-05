@@ -264,22 +264,15 @@
         return
 #global
 
-#module JSON child
+#module JSON
     #const global JSON_CRATE_EMPTY 0
     #const global JSON_CRATE_PARSE 1
 
-    #modinit int mode, str json_data_
-        if (mode = JSON_CRATE_PARSE) {
-            newmod child, Json_Array
-            parse json_data_, -1, child
-        }
+    #deffunc local parse var out, str json_data_
+        newmod child, Json_Array
+        parse_r json_data_, -1, child
+        get@Json_Array child, out,0
         return
-
-    #modfunc local get var out
-        get@Json_Array child,out,0
-        return
-
-    #defcfunc local parse_number
 
     #defcfunc local parse_value 
         string_buf = ""
@@ -354,7 +347,7 @@
         stop
 
     // parent: container
-    #deffunc local parse str json_str_, int count_, var current_, local current_container
+    #deffunc local parse_r str json_str_, int count_, var current_, local current_container
         json_data = json_str_
         current_container = current_
         count = count_
@@ -403,11 +396,11 @@
                 }
                 insertMapR current_container, key, new_nest_kv
                 getValue@JSON_Value_wrapper new_nest_kv, new_nest
-                parse json_data, count, new_nest
+                parse_r json_data, count, new_nest
             } else { // array
                 pushMap current_container
                 get@Json_Array current_container, new_nest, stat
-                parse json_data, count, new_nest
+                parse_r json_data, count, new_nest
             }
             parse_phase = 2
             continue
@@ -420,11 +413,11 @@
                 }
                 insertArrayR current_container, key, new_nest_kv
                 getValue@JSON_Value_wrapper new_nest_kv, new_nest
-                parse json_data, count, new_nest
+                parse_r json_data, count, new_nest
             } else { // array
                 pushArray current_container
                 get@Json_Array current_container, new_nest, stat
-                parse json_data, count, new_nest
+                parse_r json_data, count, new_nest
             }
             parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
             continue
@@ -452,6 +445,6 @@
         }
         loop
         return
-        
+
 #global
 #endif

@@ -4,11 +4,10 @@
 ## example
 ```hsp
 /* パースして、変数dataに一番上の階層の値を代入 */
-newmod parser, JSON, JSON_CRATE_PARSE, {"{
+parse@JSON data, {"{
     "name" : "Taro",
     "age" : 13 
 }"}
-get@JSON parser, data
 ```
 ```hsp
 /* キーに対応する値を表示 */
