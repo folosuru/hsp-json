@@ -241,6 +241,9 @@
     #modcfunc getJsonContainerType
         return type
 
+    #modcfunc getElementCount
+        return element_count
+
     #defcfunc dump_json_container var mod_
         if (getJsonContainerType(mod_) = JSON_TYPENAME_OBJECT) { // object
             return dump_json_map@JSON_Object(mod_)
