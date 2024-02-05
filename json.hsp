@@ -77,79 +77,79 @@
 #global
 
 #module JSON_Object type, child, element_count
-#modinit
-    type = JSON_TYPENAME_OBJECT
-    element_count = 0
-    repeat hash_max_value + 1
-        newmod child,JSON_Map_KV_list
-    loop
-    return
+    #modinit
+        type = JSON_TYPENAME_OBJECT
+        element_count = 0
+        repeat hash_max_value + 1
+            newmod child,JSON_Map_KV_list
+        loop
+        return
 
-#modfunc insertPrimitiveValueR str key, var value, var out
-    key_hash = Hash_string(key)
-    create_KV child(key_hash), key
-    getKV child(key_hash), out, key
-    create_primitive_val out,value
-    element_count++
-    return
+    #modfunc insertPrimitiveValueR str key, var value, var out
+        key_hash = Hash_string(key)
+        create_KV child(key_hash), key
+        getKV child(key_hash), out, key
+        create_primitive_val out,value
+        element_count++
+        return
 
-#modfunc insertMapR str key, var out
-    key_hash = Hash_string(key)
-    create_KV child(key_hash), key
-    getKV child(key_hash), out, key
-    create_JSON_Map out
-    element_count++
-    return
+    #modfunc insertMapR str key, var out
+        key_hash = Hash_string(key)
+        create_KV child(key_hash), key
+        getKV child(key_hash), out, key
+        create_JSON_Map out
+        element_count++
+        return
 
-#modfunc insertArrayR str key, var out
-    key_hash = Hash_string(key)
-    create_KV child(key_hash), key
-    getKV child(key_hash), out, key
-    create_JSON_Array out
-    element_count++
-    return
+    #modfunc insertArrayR str key, var out
+        key_hash = Hash_string(key)
+        create_KV child(key_hash), key
+        getKV child(key_hash), out, key
+        create_JSON_Array out
+        element_count++
+        return
 
-#modfunc insertPrimitiveValue str key, var value
-    insertPrimitiveValueR thismod, key, value, tmp
-    return
+    #modfunc insertPrimitiveValue str key, var value
+        insertPrimitiveValueR thismod, key, value, tmp
+        return
 
-#modfunc insertMap str key
-    insertMapR thismod, key, tmp
-    return
+    #modfunc insertMap str key
+        insertMapR thismod, key, tmp
+        return
 
-#modfunc insertArray str key
-    insertArrayR thismod, key, tmp
-    return
+    #modfunc insertArray str key
+        insertArrayR thismod, key, tmp
+        return
 
-#modfunc local get var out_, str key_
-    getKV child(Hash_string(key_)), out_kv, key_
-    getValue@JSON_Value_wrapper out_kv, out_
-    return
+    #modfunc local get var out_, str key_
+        getKV child(Hash_string(key_)), out_kv, key_
+        getValue@JSON_Value_wrapper out_kv, out_
+        return
 
-#modcfunc foreach_object var key_out, var value_out, var loop_var
-    hash_index = peek(loop_var, 0)
-    KV_index = lpeek(loop_var, 1)
-    total_count = lpeek(loop_var,5)
-    if (total_count = element_count) {
-        return 0
-    }
-    repeat
-        if (getSize@JSON_Map_KV_list(child(hash_index)) <= KV_index) {
-            hash_index++
-            KV_index = 0
-        } else {
-            break
+    #modcfunc foreach_object var key_out, var value_out, var loop_var
+        hash_index = peek(loop_var, 0)
+        KV_index = lpeek(loop_var, 1)
+        total_count = lpeek(loop_var,5)
+        if (total_count = element_count) {
+            return 0
         }
-    loop
-    getKV_index@JSON_Map_KV_list child(hash_index), KV_index, out
-    key_out = getMapKey@JSON_Map_KV(out)
-    getValue@JSON_Value_wrapper out, value_out
-    KV_index++
-    total_count++
-    poke loop_var, 0, hash_index
-    lpoke loop_var,1, KV_index
-    lpoke loop_var, 5, total_count
-    return 1
+        repeat
+            if (getSize@JSON_Map_KV_list(child(hash_index)) <= KV_index) {
+                hash_index++
+                KV_index = 0
+            } else {
+                break
+            }
+        loop
+        getKV_index@JSON_Map_KV_list child(hash_index), KV_index, out
+        key_out = getMapKey@JSON_Map_KV(out)
+        getValue@JSON_Value_wrapper out, value_out
+        KV_index++
+        total_count++
+        poke loop_var, 0, hash_index
+        lpoke loop_var,1, KV_index
+        lpoke loop_var, 5, total_count
+        return 1
     
     #modcfunc local dump_json_map local dump_result, local foreach_count
         dump_result = "{"
@@ -265,194 +265,193 @@
 #global
 
 #module JSON child
-#const global JSON_CRATE_EMPTY 0
-#const global JSON_CRATE_PARSE 1
+    #const global JSON_CRATE_EMPTY 0
+    #const global JSON_CRATE_PARSE 1
 
-#modinit int mode, str json_data_
-    if (mode = JSON_CRATE_PARSE) {
-        newmod child, Json_Array
-        parse json_data_, -1, child
-    }
-    return
-
-#modfunc local get var out
-    get@Json_Array child,out,0
-    return
-
-#defcfunc local parse_number
-
-#defcfunc local parse_value 
-    string_buf = ""
-    str_length = strlen(json_data)
-    current_char = strmid(json_data,count,1)
-    current_char_code = peek(current_char,0)
-    if (current_char = "\"") {
-        repeat
-        count++
-        if (count >= str_length) {
-            break
+    #modinit int mode, str json_data_
+        if (mode = JSON_CRATE_PARSE) {
+            newmod child, Json_Array
+            parse json_data_, -1, child
         }
+        return
+
+    #modfunc local get var out
+        get@Json_Array child,out,0
+        return
+
+    #defcfunc local parse_number
+
+    #defcfunc local parse_value 
+        string_buf = ""
+        str_length = strlen(json_data)
         current_char = strmid(json_data,count,1)
-        if (current_char = "\\") {
-            count++
-            current_char = strmid(json_data, count,1)
-            if (current_char = "\"") {
-                string_buf = string_buf + "\""
-            } else if (current_char = "\\") {
-                string_buf = string_buf + "\\"
-            } else if (current_char = "/") {
-                string_buf = string_buf + "/"
-            } else if (current_char = "n") {
-                string_buf = string_buf + "\n"
-            } else if (current_char = "r") {
-                string_buf = string_buf + "\r"
-            } else if (current_char = "t") {
-                string_buf = string_buf + "\t"
-            } else {
-                // ??
-            }
-            continue
-        }
-        if (current_char = "\"") {
-            break 
-        }
-        string_buf = string_buf + current_char
-        loop
-        return string_buf
-    } else : if (('0' <= current_char_code and current_char_code <= '9') or current_char = "-") { // number
-    double_flag = 0
-    minus_flag = 1
-    if (strmid(json_data,count,1) = "-") {
-        minus_flag = -1
-        count++
-    }
-    repeat
-        if (count >= str_length) {
-            break
-        }
-        current_char = strmid(json_data,count,1)
-        if (current_char = ".") {
-            double_flag = 1
-        }
         current_char_code = peek(current_char,0)
-        if ('0' <= current_char_code and current_char_code <= '9') {
+        if (current_char = "\"") {
+            repeat
+            count++
+            if (count >= str_length) {
+                break
+            }
+            current_char = strmid(json_data,count,1)
+            if (current_char = "\\") {
+                count++
+                current_char = strmid(json_data, count,1)
+                if (current_char = "\"") {
+                    string_buf = string_buf + "\""
+                } else if (current_char = "\\") {
+                    string_buf = string_buf + "\\"
+                } else if (current_char = "/") {
+                    string_buf = string_buf + "/"
+                } else if (current_char = "n") {
+                    string_buf = string_buf + "\n"
+                } else if (current_char = "r") {
+                    string_buf = string_buf + "\r"
+                } else if (current_char = "t") {
+                    string_buf = string_buf + "\t"
+                } else {
+                    // ??
+                }
+                continue
+            }
+            if (current_char = "\"") {
+                break 
+            }
             string_buf = string_buf + current_char
-        } else {
-            count--
-            break
+            loop
+            return string_buf
+        } else : if (('0' <= current_char_code and current_char_code <= '9') or current_char = "-") { // number
+        double_flag = 0
+        minus_flag = 1
+        if (strmid(json_data,count,1) = "-") {
+            minus_flag = -1
+            count++
         }
-        count++
-    loop
-        if (double_flag = 1) {
-            return double(string_buf) * minus_flag
-        } else {
-            return int(string_buf) * minus_flag
+        repeat
+            if (count >= str_length) {
+                break
+            }
+            current_char = strmid(json_data,count,1)
+            if (current_char = ".") {
+                double_flag = 1
+            }
+            current_char_code = peek(current_char,0)
+            if ('0' <= current_char_code and current_char_code <= '9') {
+                string_buf = string_buf + current_char
+            } else {
+                count--
+                break
+            }
+            count++
+        loop
+            if (double_flag = 1) {
+                return double(string_buf) * minus_flag
+            } else {
+                return int(string_buf) * minus_flag
+            }
         }
-    }
-    v = "\r"
-    print peek(v,0)
-    stop
+        v = "\r"
+        print peek(v,0)
+        stop
 
-// parent: container
-#deffunc local parse str json_str_, int count_, var current_, local current_container
-    json_data = json_str_
-    current_container = current_
-    count = count_
+    // parent: container
+    #deffunc local parse str json_str_, int count_, var current_, local current_container
+        json_data = json_str_
+        current_container = current_
+        count = count_
 
-    #enum FINDING_VALUE = 0
-    #enum FINDING_KEY
-    #enum FINGING_COMMA_OR_BRACKET_CLOSE
-    #enum FINDINF_CORON
-    if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
-        parse_phase = FINDING_KEY
-    } else {
-        parse_phase = FINDING_VALUE
-    }
-    // 1 => map
-    // 2 => array
-    key = ""
-    str_length = strlen(json_data)
-    repeat
-        count++
-        if (count >= str_length) {
-            break
-        }
-        
-        current_char = peek(json_data, count)
-        if (current_char = ' ' or current_char = 10 /*LF*/ or current_char = 13 /*CR*/ or current_char = '\t')  {
-            continue
-        }
-    if (current_char = ':' and parse_phase = 3) {
-        parse_phase = FINDING_VALUE
-        continue
-    }
-
-    if (current_char = ',' and parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE) {
-        if (getJsonContainerType(current_container) = 1) {
+        #enum FINDING_VALUE = 0
+        #enum FINDING_KEY
+        #enum FINGING_COMMA_OR_BRACKET_CLOSE
+        #enum FINDINF_CORON
+        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
             parse_phase = FINDING_KEY
         } else {
             parse_phase = FINDING_VALUE
         }
-        continue
-    }
-    if (current_char = '{') {
-        nest_level++
-        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
-            if ( parse_phase = FINDING_KEY ) {
-                dialog "parse error: expext key {}"
+        // 1 => map
+        // 2 => array
+        key = ""
+        str_length = strlen(json_data)
+        repeat
+            count++
+            if (count >= str_length) {
+                break
             }
-            insertMapR current_container, key, new_nest_kv
-            getValue@JSON_Value_wrapper new_nest_kv, new_nest
-            parse json_data, count, new_nest
-        } else { // array
-            pushMap current_container
-            get@Json_Array current_container, new_nest, stat
-            parse json_data, count, new_nest
-        }
-        parse_phase = 2
-        continue
-    }
-    if (current_char = '[') {
-        nest_level++
-        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {    
-            if ( parse_phase = FINDING_KEY ) {
-                dialog "parse error: expext key in insert []"
-            }
-            insertArrayR current_container, key, new_nest_kv
-            getValue@JSON_Value_wrapper new_nest_kv, new_nest
-            parse json_data, count, new_nest
-        } else { // array
-            pushArray current_container
-            get@Json_Array current_container, new_nest, stat
-            parse json_data, count, new_nest
-        }
-        parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
-        continue
-    }
-    if (current_char = '}' or current_char = ']') {
-        if (getJsonContainerType(current_container) = JSON_TYPENAME_PRIMITIVE and parse_phase != 0) {
-            dialog "parse error: unexpected } or ]"
-        }
-        break
-    }
 
-    read_str = parse_value()
-    if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
-        if (parse_phase = FINDING_KEY) {
-            key = read_str
-            parse_phase = FINDINF_CORON
-        } else {
-            insertPrimitiveValue current_container, key, read_str
+            current_char = peek(json_data, count)
+            if (current_char = ' ' or current_char = 10 /*LF*/ or current_char = 13 /*CR*/ or current_char = '\t')  {
+                continue
+            }
+        if (current_char = ':' and parse_phase = 3) {
+            parse_phase = FINDING_VALUE
+            continue
+        }
+
+        if (current_char = ',' and parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE) {
+            if (getJsonContainerType(current_container) = 1) {
+                parse_phase = FINDING_KEY
+            } else {
+                parse_phase = FINDING_VALUE
+            }
+            continue
+        }
+        if (current_char = '{') {
+            nest_level++
+            if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
+                if ( parse_phase = FINDING_KEY ) {
+                    dialog "parse error: expext key {}"
+                }
+                insertMapR current_container, key, new_nest_kv
+                getValue@JSON_Value_wrapper new_nest_kv, new_nest
+                parse json_data, count, new_nest
+            } else { // array
+                pushMap current_container
+                get@Json_Array current_container, new_nest, stat
+                parse json_data, count, new_nest
+            }
+            parse_phase = 2
+            continue
+        }
+        if (current_char = '[') {
+            nest_level++
+            if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {    
+                if ( parse_phase = FINDING_KEY ) {
+                    dialog "parse error: expext key in insert []"
+                }
+                insertArrayR current_container, key, new_nest_kv
+                getValue@JSON_Value_wrapper new_nest_kv, new_nest
+                parse json_data, count, new_nest
+            } else { // array
+                pushArray current_container
+                get@Json_Array current_container, new_nest, stat
+                parse json_data, count, new_nest
+            }
             parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
             continue
         }
-    } else {
-        pushPrimitiveValue current_container, read_str
-        parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
-    }
-    continue
+        if (current_char = '}' or current_char = ']') {
+            if (getJsonContainerType(current_container) = JSON_TYPENAME_PRIMITIVE and parse_phase != 0) {
+                dialog "parse error: unexpected } or ]"
+            }
+            break
+        }
 
-loop
-return
+        read_str = parse_value()
+        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
+            if (parse_phase = FINDING_KEY) {
+                key = read_str
+                parse_phase = FINDINF_CORON
+            } else {
+                insertPrimitiveValue current_container, key, read_str
+                parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
+                continue
+            }
+        } else {
+            pushPrimitiveValue current_container, read_str
+            parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
+        }
+        loop
+        return
+        
 #global
 #endif
