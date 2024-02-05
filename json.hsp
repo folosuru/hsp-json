@@ -278,23 +278,6 @@
 
 #modfunc local get var out
     get@Json_Array child,out,0
-    return  
-// parse "value"
-
-#deffunc parse_str_test str input_
-    json_data = input_
-    str_length = strlen(json_data)
-    count = 0
-    repeat 
-        count++
-        if (count >= str_length) {
-            break
-        }
-        print "aa :  " +strmid(json_data,count,1)
-        if (strmid(json_data,count,1) = "\"") {
-            print parse_string()
-        }
-    loop
     return
 
 #defcfunc local parse_number
@@ -386,7 +369,6 @@
     } else {
         key_empty_flag = 0
     }
-    //  print "nest!"
     // 1 => map
     // 2 => array
     key = ""
@@ -415,7 +397,6 @@
         continue
     }
     if (current_char = '{') {
-        //print "nest1{ : " + count
         nest_level++
         if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
             if ( key_empty_flag = 1 ) {
@@ -433,7 +414,6 @@
         continue
     }
     if (current_char = '[') {
-        //print "nest1[ : " + count
         nest_level++
         if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {    
             if ( key_empty_flag = 1 ) {
