@@ -43,6 +43,7 @@
         type = JSON_TYPE_TRUE
         return
 #global
+
 #module JSON_FALSE type
     #modinit
         type = JSON_TYPE_FALSE
@@ -308,8 +309,16 @@
         return
 #global
 #module JSON_container_util type, child, element_count
-    #modcfunc getJsonContainerType
+
+    #modcfunc local get_type_mod
         return type
+    
+    #defcfunc getJsonContainerType var mod_
+        if (vartype(mod_) = 5) {
+            return get_type_mod(mod_)
+        } else {
+            return 0
+        }
 
     #modcfunc getElementCount
         return element_count
@@ -331,9 +340,8 @@
     #const global JSON_CRATE_PARSE 1
 
     #deffunc local parse var out, str json_data_
-        newmod child, Json_Array
-        parse_r json_data_, -1, child
-        get@Json_Array child, out,0
+        out = 0
+        parse_r json_data_, -1, out
         return
 
     #deffunc get_last_create var out_
@@ -383,37 +391,35 @@
             loop
             return string_buf
         } else : if (('0' <= current_char_code and current_char_code <= '9') or current_char = "-") { // number
-        double_flag = 0
-        minus_flag = 1
-        if (strmid(json_data,count,1) = "-") {
-            minus_flag = -1
-            count++
-        }
-        repeat
-            if (count >= str_length) {
-                break
+            double_flag = 0
+            minus_flag = 1
+            if (strmid(json_data,count,1) = "-") {
+                minus_flag = -1
+                count++
             }
-            current_char = strmid(json_data,count,1)
-            if (current_char = ".") {
-                double_flag = 1
-            }
-            current_char_code = peek(current_char,0)
-            if ('0' <= current_char_code and current_char_code <= '9') {
-                string_buf = string_buf + current_char
-            } else {
-                count--
-                break
-            }
-            count++
-        loop
+            repeat
+                if (count >= str_length) {
+                    break
+                }
+                current_char = strmid(json_data,count,1)
+                if (current_char = ".") {
+                    double_flag = 1
+                }
+                current_char_code = peek(current_char,0)
+                if ('0' <= current_char_code and current_char_code <= '9') {
+                    string_buf = string_buf + current_char
+                } else {
+                    count--
+                    break
+                }
+                count++
+            loop
             if (double_flag = 1) {
                 return double(string_buf) * minus_flag
             } else {
                 return int(string_buf) * minus_flag
             }
         }
-        v = "\r"
-        print peek(v,0)
         stop
 
     // parent: container
@@ -460,36 +466,49 @@
         }
         if (current_char = '{') {
             nest_level++
-            if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {
-                if ( parse_phase = FINDING_KEY ) {
-                    dialog "parse error: expext key {}"
+            if (vartype(current_container) = 5) {
+                if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {
+                    if ( parse_phase = FINDING_KEY ) {
+                        dialog "parse error: expext key {}"
+                    }
+                    insert_special current_container, key, JSON_TYPE_OBJECT
+                    get_last_create new_nest_kv
+                    getValue@JSON_Value_wrapper new_nest_kv, new_nest
+                    parse_r json_data, count, new_nest
+                } else { // array
+                    pushSpecialValue current_container, JSON_TYPE_OBJECT
+                    get@Json_Array current_container, new_nest, stat
+                    parse_r json_data, count, new_nest
                 }
-                insert_special current_container, key, JSON_TYPE_OBJECT
-                get_last_create new_nest_kv
-                getValue@JSON_Value_wrapper new_nest_kv, new_nest
-                parse_r json_data, count, new_nest
-            } else { // array
-                pushSpecialValue current_container, JSON_TYPE_OBJECT
-                get@Json_Array current_container, new_nest, stat
-                parse_r json_data, count, new_nest
+            } else {
+                newmod current_, JSON_Object
+                parse_r json_data, count, current_
+                return
             }
+
             parse_phase = 2
             continue
         }
         if (current_char = '[') {
             nest_level++
-            if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {    
-                if ( parse_phase = FINDING_KEY ) {
-                    dialog "parse error: expext key in insert []"
+            if (vartype(current_container) = 5) {
+                if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {    
+                    if ( parse_phase = FINDING_KEY ) {
+                        dialog "parse error: expext key in insert []"
+                    }
+                    insert_special current_container, key, JSON_TYPE_ARRAY
+                    get_last_create new_nest_kv
+                    getValue@JSON_Value_wrapper new_nest_kv, new_nest
+                    parse_r json_data, count, new_nest
+                } else { // array
+                    pushSpecialValue current_container, JSON_TYPE_ARRAY
+                    get@Json_Array current_container, new_nest, stat
+                    parse_r json_data, count, new_nest
                 }
-                insert_special current_container, key, JSON_TYPE_ARRAY
-                get_last_create new_nest_kv
-                getValue@JSON_Value_wrapper new_nest_kv, new_nest
-                parse_r json_data, count, new_nest
-            } else { // array
-                pushSpecialValue current_container, JSON_TYPE_ARRAY
-                get@Json_Array current_container, new_nest, stat
-                parse_r json_data, count, new_nest
+            } else {
+                newmod current_, JSON_TYPE_ARRAY
+                parse_r json_data, count, current_
+                return
             }
             parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
             continue
