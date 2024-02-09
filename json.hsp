@@ -38,20 +38,9 @@
         return 0
 #global
 
-#module JSON_TRUE type
-    #modinit
-        type = JSON_TYPE_TRUE
-        return
-#global
-
-#module JSON_FALSE type
-    #modinit
-        type = JSON_TYPE_FALSE
-        return
-#global
-#module JSON_NULL type
-    #modinit
-        type = JSON_TYPE_NULL
+#module JSON_SPECIAL_VAL type
+    #modinit int type_
+        type = type_
         return
 #global
 
@@ -120,17 +109,7 @@
         create_KV child(key_hash), key
 
         getKV_index@JSON_Map_KV_list child(key_hash), stat, created_kv
-        if (insert_type_ = JSON_TYPE_OBJECT) {
-            create_JSON_Map created_kv
-        } else : if (insert_type_ = JSON_TYPE_ARRAY) {
-            create_JSON_Array created_kv
-        } else : if (insert_type_ = JSON_TYPE_TRUE) {
-            create_JSON_True created_kv
-        } else : if (insert_type_ = JSON_TYPE_FALSE) {
-            create_JSON_False created_kv
-        } else : if (insert_type_ = JSON_TYPE_NULL) {
-            create_JSON_Null created_kv
-        }
+        create_JSON_Special_val created_kv, insert_type_
 
         set_last_create created_kv
         element_count++
@@ -196,17 +175,7 @@
 
     #modfunc push_special int push_type_id_
         newmod child, JsonArrayChild
-        if (push_type_id_ = JSON_TYPE_OBJECT) {
-            create_JSON_Map child(element_count)
-        } else : if (push_type_id_ = JSON_TYPE_ARRAY) {
-            create_JSON_Array child(element_count)
-        } else : if (push_type_id_ = JSON_TYPE_TRUE) {
-            create_JSON_True child(element_count)
-        } else : if (push_type_id_ = JSON_TYPE_FALSE) {
-            create_JSON_False child(element_count)
-        } else : if (push_type_id_ = JSON_TYPE_NULL) {
-            create_JSON_Null child(element_count)
-        }
+        create_JSON_Special_val child(element_count), push_type_id_
         element_count++
         return (element_count - 1) // return index
 
@@ -248,24 +217,14 @@
         value = value_
         return
 
-    #modfunc create_JSON_Map 
-        newmod value,JSON_Object
-        return
-
-    #modfunc create_JSON_Array
-        newmod value,Json_Array
-        return
-
-    #modfunc create_JSON_True
-        newmod value, JSON_TRUE
-        return
-        
-    #modfunc create_JSON_False
-        newmod value, JSON_FALSE
-        return
-
-    #modfunc create_JSON_Null
-        newmod value, JSON_NULL
+    #modfunc create_JSON_Special_val int type_
+        if (type_ = JSON_TYPE_OBJECT) {
+            newmod value,JSON_Object
+        } else : if (type_ = JSON_TYPE_ARRAY) {
+            newmod value,Json_Array
+        } else {
+            newmod value, JSON_SPECIAL_VAL, type_
+        }
         return
 
     #modfunc local getValue var out
@@ -288,7 +247,7 @@
         return element_count
 
     #defcfunc dump_json_container var mod_
-        var_type = getJsonContainerType(mod_)
+        var_type = get_type_mod(mod_)
         if (var_type = JSON_TYPE_OBJECT) { // object
             return dump_json_map@JSON_Object(mod_)
         } else : if (var_type = JSON_TYPE_ARRAY) {
