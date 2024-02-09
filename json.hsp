@@ -107,7 +107,7 @@
         loop
         return
 
-    #modfunc insertPrimitiveValueR str key, var value, var out
+    #modfunc insert_normalR str key, var value, var out
         key_hash = Hash_string(key)
         create_KV child(key_hash), key
         getKV_index@JSON_Map_KV_list child(key_hash), stat, out
@@ -136,32 +136,8 @@
         element_count++
         return
 
-    #modfunc insertMapR str key, var out
-        key_hash = Hash_string(key)
-        create_KV child(key_hash), key
-        getKV_index@JSON_Map_KV_list child(key_hash), stat, out
-        create_JSON_Map out
-        element_count++
-        return
-
-    #modfunc insertArrayR str key, var out
-        key_hash = Hash_string(key)
-        create_KV child(key_hash), key
-        getKV_index@JSON_Map_KV_list child(key_hash), stat, out
-        create_JSON_Array out
-        element_count++
-        return
-
-    #modfunc insertPrimitiveValue str key, var value
-        insertPrimitiveValueR thismod, key, value, tmp
-        return
-
-    #modfunc insertMap str key
-        insert_special thismod, key, JSON_TYPE_OBJECT
-        return
-
-    #modfunc insertArray str key
-        insert_special thismod, key, JSON_TYPE_ARRAY
+    #modfunc insert_normal str key, var value
+        insert_normalR thismod, key, value, tmp
         return
 
     #modfunc local get var out_, str key_
@@ -234,21 +210,9 @@
         element_count++
         return (element_count - 1) // return index
 
-    #modfunc pushPrimitiveValue var value
+    #modfunc push_normal var value
         newmod child, JsonArrayChild
         create_primitive_val child(element_count), value
-        element_count++
-        return (element_count - 1) // return index
-    
-    #modfunc pushMap
-        newmod child, JsonArrayChild
-        create_JSON_Map child(element_count)
-        element_count++
-        return (element_count - 1) // return index
-
-    #modfunc pushArray
-        newmod child, JsonArrayChild
-        create_JSON_Array child(element_count)
         element_count++
         return (element_count - 1) // return index
         
@@ -554,7 +518,7 @@
                 keyword_type =  isKeyword(add_cnt)
                 if (keyword_type = 0) {
                     read_str = parse_value()
-                    insertPrimitiveValue current_container, key, read_str
+                    insert_normal current_container, key, read_str
                 } else {
                     insert_special current_container, key, keyword_type
                     count = count + add_cnt
@@ -566,7 +530,7 @@
             keyword_type =  isKeyword(add_cnt)
             if (keyword_type = 0) {
                 read_str = parse_value()
-                pushPrimitiveValue current_container, read_str
+                push_normal current_container, read_str
             } else {
                 push_special current_container, keyword_type
                 count = count + add_cnt
