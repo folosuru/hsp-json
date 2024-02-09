@@ -39,25 +39,19 @@ loop
 
 ### 普通の型の値を入れる
 ```
-pushPrimitiveValue module, p1
+push_normal module, p1
 
 module : Objectが入ってるモジュール型変数。
 p1 : 入れる値
 ```
 statに作成した値のindexが代入されます。
 
-### 中身が空のObjectを入れる
+### 普通じゃない型の値を入れる
 ```
-pushMap module
+push_special module, p1
 
 module : Objectが入ってるモジュール型変数。
+p1 : 入れる型の種類
 ```
+p1は[型を表す定数](./index.md#型を表す定数)に対応しています。
 statに作成した値のindexが代入されます。
-
-### 中身が空のArrayを入れる
-```
-pushArray module
-
-module : Objectが入ってるモジュール型変数。
-```
-statに（略

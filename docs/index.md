@@ -22,20 +22,25 @@ p1 : 書きだす値
 戻り値：文字列
 ```
 
-## Object/Array共通
-### 型判別
+### 型を判定
 ```
 v = getJsonContainerType( p1 )
 
 p1 : 型を判別したい変数
-戻り値：下表参照
+戻り値：下表のいずれか
 ```
-| 戻り値 | 型 |
-|----|---|
-| 0 | HSP標準の型（str,int,double...）|
-| 1 | Object|
-| 2 | Array |
+#### 型を表す定数
+| 定数 |  型 |
+| --- | ---|
+|JSON_TYPE_NORMAL |  HSP標準の型（str,int,double...）|
+|JSON_TYPE_OBJECT |  Object|
+|JSON_TYPE_ARRAY |  Array |
+|JSON_TYPE_TRUE | true |
+|JSON_TYPE_FALSE | false |
+|JSON_TYPE_NULL | null |
 
+
+## Object/Array共通
 ### 要素数取得
 ```
 v = getElementCount( module )

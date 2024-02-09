@@ -24,7 +24,7 @@ v = foreach_object(module, p1, p2, p3)
 module : Objectが入ってるモジュール型変数。
 p1 : キーが代入される変数
 p2 : 値が代入される変数
-p3 : ループ用変数（→json_start_foreach）
+p3 : ループ用変数（→[json_start_foreach](./index.md#内容の走査準備)）
 戻り値 : 値が読み出せれば0、読み出せなければ（全て読みだしたら）1
 ```
 ```hsp
@@ -40,43 +40,24 @@ loop
 
 ### 普通の型の値を入れる
 ```
-insertPrimitiveValue module, "key", p1
+insert_normal module, "key", p1
 
 module : Objectが入ってるモジュール型変数。
 "key" : 値のキー。
 p1 : 入れる値
 ```
 
-### 中身が空のObjectを入れる
+### 普通じゃない型の値を入れる
 ```
-insertMap module, "key"
+insert_special module, "key", p1
 
 module : Objectが入ってるモジュール型変数。
 "key" : 値のキー。
+p1 : 入れる型の種類
 ```
-```
-insertMapR module, "key", p1
+p1は[型を表す定数](./index.md#型を表す定数)に対応しています。
 
-module : Objectが入ってるモジュール型変数。
-"key" : 値のキー。
-p1 : 追加したMapへの参照が入る変数
+例；変数moduleに入ったObjectにキー"a"にtrueを代入する
 ```
-Q. Rがついてないやつとついてるやつの違いは？  
-A. 追加した値を参照する変数が帰ってくるか
-
-### 中身が空のArrayを入れる
+insert_special module, "a", JSON_TYPE_TRUE
 ```
-insertArray module, "key"
-
-module : Objectが入ってるモジュール型変数。
-"key" : 値のキー。
-```
-```
-insertArray module, "key", p1
-
-module : Objectが入ってるモジュール型変数。
-"key" : 値のキー。
-p1 : 追加したMap
-```
-Q. Rがついてないやつとついてるやつの違いは？  
-A. 上に同じ
