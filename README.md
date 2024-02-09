@@ -1,5 +1,5 @@
 # json-hsp
-それなりに使えるHSPのJSONライブラリ
+雑に作ったHSPのJSONライブラリ
 
 ## example
 ```hsp
@@ -33,7 +33,5 @@ loop
 ### Object/Array
 - 要素の削除
 - 内容も含めたクローン
-### 他の値
-- nullとbool型の実装
 ### その他
 - JSONの整形
