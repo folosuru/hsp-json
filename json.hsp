@@ -2,9 +2,13 @@
 #else
 #define global HSP_JSON_FILE_GUARD 0
 
-#const global JSON_TYPENAME_PRIMITIVE 0
-#const global JSON_TYPENAME_OBJECT 1
-#const global JSON_TYPENAME_ARRAY 2
+#const global JSON_TYPE_PRIMITIVE 0
+#const global JSON_TYPE_OBJECT 1
+#const global JSON_TYPE_ARRAY 2
+#const global JSON_TYPE_TRUE 3
+#const global JSON_TYPE_FALSE 4
+#const global JSON_TYPE_NULL 5
+
 
 #module hash_util
     #const global hash_max_value 256
@@ -33,6 +37,23 @@
         swend
         return 0
 #global
+
+#module JSON_TRUE type
+    #modinit
+            type = JSON_TYPE_TRUE
+        return
+#global
+#module JSON_FALSE type
+    #modinit
+            type = JSON_TYPE_FALSE
+        return
+#global
+#module JSON_NULL type
+    #modinit
+            type = JSON_TYPE_NULL
+        return
+#global
+
 #module JSON_Map_KV value, type, key
     #modinit str key_
         key = key_
@@ -78,7 +99,7 @@
 
 #module JSON_Object type, child, element_count
     #modinit
-        type = JSON_TYPENAME_OBJECT
+        type = JSON_TYPE_OBJECT
         element_count = 0
         repeat hash_max_value + 1
             newmod child,JSON_Map_KV_list
@@ -90,6 +111,24 @@
         create_KV child(key_hash), key
         getKV child(key_hash), out, key
         create_primitive_val out,value
+        element_count++
+        return
+
+    #modfunc insertSpecialR str key, var out, int insert_type_
+        key_hash = Hash_string(key)
+        create_KV child(key_hash), key
+        getKV child(key_hash), out, key
+        if (insert_type_ = JSON_TYPE_OBJECT) {
+            create_JSON_Map out
+        } else : if (insert_type_ = JSON_TYPE_ARRAY) {
+            create_JSON_Array out
+        } else : if (insert_type_ = JSON_TYPE_TRUE) {
+            create_JSON_True out
+        } else : if (insert_type_ = JSON_TYPE_FALSE) {
+            create_JSON_False out
+        } else : if (insert_type_ = JSON_TYPE_NULL) {
+            create_JSON_Null out
+        }
         element_count++
         return
 
@@ -114,11 +153,11 @@
         return
 
     #modfunc insertMap str key
-        insertMapR thismod, key, tmp
+        insertSpecialR thismod, key, tmp, JSON_TYPE_OBJECT
         return
 
     #modfunc insertArray str key
-        insertArrayR thismod, key, tmp
+        insertSpecialR thismod, key, tmp, JSON_TYPE_ARRAY
         return
 
     #modfunc local get var out_, str key_
@@ -171,9 +210,25 @@
 
 #module Json_Array type,child, element_count
     #modinit
-        type = JSON_TYPENAME_ARRAY
+        type = JSON_TYPE_ARRAY
         element_count = 0
         return
+
+    #modfunc pushSpecialValue int push_type_id_
+        newmod child, JsonArrayChild
+        if (push_type_id_ = JSON_TYPE_OBJECT) {
+            create_JSON_Map child(element_count)
+        } else : if (push_type_id_ = JSON_TYPE_ARRAY) {
+            create_JSON_Array child(element_count)
+        } else : if (push_type_id_ = JSON_TYPE_TRUE) {
+            create_JSON_True child(element_count)
+        } else : if (push_type_id_ = JSON_TYPE_FALSE) {
+            create_JSON_False child(element_count)
+        } else : if (push_type_id_ = JSON_TYPE_NULL) {
+            create_JSON_Null child(element_count)
+        }
+        element_count++
+        return (element_count - 1) // return index
 
     #modfunc pushPrimitiveValue var value
         newmod child, JsonArrayChild
@@ -233,6 +288,18 @@
         newmod value,Json_Array
         return
 
+    #modfunc create_JSON_True
+        newmod value, JSON_TRUE
+        return
+        
+    #modfunc create_JSON_False
+        newmod value, JSON_FALSE
+        return
+
+    #modfunc create_JSON_Null
+        newmod value, JSON_NULL
+        return
+
     #modfunc local getValue var out
         out = value
         return
@@ -245,9 +312,9 @@
         return element_count
 
     #defcfunc dump_json_container var mod_
-        if (getJsonContainerType(mod_) = JSON_TYPENAME_OBJECT) { // object
+        if (getJsonContainerType(mod_) = JSON_TYPE_OBJECT) { // object
             return dump_json_map@JSON_Object(mod_)
-        } else : if (getJsonContainerType(mod_) = JSON_TYPENAME_ARRAY) {
+        } else : if (getJsonContainerType(mod_) = JSON_TYPE_ARRAY) {
             return dump_json_array@Json_Array(mod_)
         }
         return         
@@ -348,7 +415,7 @@
         #enum FINDING_KEY
         #enum FINGING_COMMA_OR_BRACKET_CLOSE
         #enum FINDINF_CORON
-        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
+        if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {
             parse_phase = FINDING_KEY
         } else {
             parse_phase = FINDING_VALUE
@@ -382,15 +449,15 @@
         }
         if (current_char = '{') {
             nest_level++
-            if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
+            if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {
                 if ( parse_phase = FINDING_KEY ) {
                     dialog "parse error: expext key {}"
                 }
-                insertMapR current_container, key, new_nest_kv
+                insertSpecialR current_container, key, new_nest_kv, JSON_TYPE_OBJECT
                 getValue@JSON_Value_wrapper new_nest_kv, new_nest
                 parse_r json_data, count, new_nest
             } else { // array
-                pushMap current_container
+                pushSpecialValue current_container, JSON_TYPE_OBJECT
                 get@Json_Array current_container, new_nest, stat
                 parse_r json_data, count, new_nest
             }
@@ -399,15 +466,15 @@
         }
         if (current_char = '[') {
             nest_level++
-            if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {    
+            if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {    
                 if ( parse_phase = FINDING_KEY ) {
                     dialog "parse error: expext key in insert []"
                 }
-                insertArrayR current_container, key, new_nest_kv
+                insertSpecialR current_container, key, new_nest_kv, JSON_TYPE_ARRAY
                 getValue@JSON_Value_wrapper new_nest_kv, new_nest
                 parse_r json_data, count, new_nest
             } else { // array
-                pushArray current_container
+                pushSpecialValue current_container, JSON_TYPE_ARRAY
                 get@Json_Array current_container, new_nest, stat
                 parse_r json_data, count, new_nest
             }
@@ -415,14 +482,14 @@
             continue
         }
         if (current_char = '}' or current_char = ']') {
-            if (getJsonContainerType(current_container) = JSON_TYPENAME_PRIMITIVE and parse_phase != 0) {
+            if (getJsonContainerType(current_container) = JSON_TYPE_PRIMITIVE and parse_phase != 0) {
                 dialog "parse error: unexpected } or ]"
             }
             break
         }
 
         read_str = parse_value()
-        if (getJsonContainerType(current_container) = JSON_TYPENAME_OBJECT) {
+        if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {
             if (parse_phase = FINDING_KEY) {
                 key = read_str
                 parse_phase = FINDINF_CORON
