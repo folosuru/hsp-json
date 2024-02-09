@@ -2,7 +2,7 @@
 #else
 #define global HSP_JSON_FILE_GUARD 0
 
-#const global JSON_TYPE_PRIMITIVE 0
+#const global JSON_TYPE_NORMAL 0
 #const global JSON_TYPE_OBJECT 1
 #const global JSON_TYPE_ARRAY 2
 #const global JSON_TYPE_TRUE 3
@@ -503,7 +503,7 @@
             continue
         }
         if (current_char = '}' or current_char = ']') {
-            if (getJsonContainerType(current_container) = JSON_TYPE_PRIMITIVE and parse_phase != 0) {
+            if (getJsonContainerType(current_container) = JSON_TYPE_NORMAL and parse_phase != 0) {
                 dialog "parse error: unexpected } or ]"
             }
             break
