@@ -74,7 +74,7 @@
     #modfunc create_KV str key
         ElementCount++
         newmod values,JSON_Map_KV, key
-        return
+        return (ElementCount - 1)
 
     #modfunc local getKV_index int index, var out
         out = values(index)
@@ -109,33 +109,36 @@
     #modfunc insertPrimitiveValueR str key, var value, var out
         key_hash = Hash_string(key)
         create_KV child(key_hash), key
-        getKV child(key_hash), out, key
+        getKV_index@JSON_Map_KV_list child(key_hash), stat, out
         create_primitive_val out,value
         element_count++
         return
 
-    #modfunc insertSpecialR str key, var out, int insert_type_
+    #modfunc insert_special str key, int insert_type_
         key_hash = Hash_string(key)
         create_KV child(key_hash), key
-        getKV child(key_hash), out, key
+
+        getKV_index@JSON_Map_KV_list child(key_hash), stat, created_kv
         if (insert_type_ = JSON_TYPE_OBJECT) {
-            create_JSON_Map out
+            create_JSON_Map created_kv
         } else : if (insert_type_ = JSON_TYPE_ARRAY) {
-            create_JSON_Array out
+            create_JSON_Array created_kv
         } else : if (insert_type_ = JSON_TYPE_TRUE) {
-            create_JSON_True out
+            create_JSON_True created_kv
         } else : if (insert_type_ = JSON_TYPE_FALSE) {
-            create_JSON_False out
+            create_JSON_False created_kv
         } else : if (insert_type_ = JSON_TYPE_NULL) {
-            create_JSON_Null out
+            create_JSON_Null created_kv
         }
+
+        set_last_create created_kv
         element_count++
         return
 
     #modfunc insertMapR str key, var out
         key_hash = Hash_string(key)
         create_KV child(key_hash), key
-        getKV child(key_hash), out, key
+        getKV_index@JSON_Map_KV_list child(key_hash), stat, out
         create_JSON_Map out
         element_count++
         return
@@ -143,7 +146,7 @@
     #modfunc insertArrayR str key, var out
         key_hash = Hash_string(key)
         create_KV child(key_hash), key
-        getKV child(key_hash), out, key
+        getKV_index@JSON_Map_KV_list child(key_hash), stat, out
         create_JSON_Array out
         element_count++
         return
@@ -153,11 +156,11 @@
         return
 
     #modfunc insertMap str key
-        insertSpecialR thismod, key, tmp, JSON_TYPE_OBJECT
+        insert_special thismod, key, JSON_TYPE_OBJECT
         return
 
     #modfunc insertArray str key
-        insertSpecialR thismod, key, tmp, JSON_TYPE_ARRAY
+        insert_special thismod, key, JSON_TYPE_ARRAY
         return
 
     #modfunc local get var out_, str key_
@@ -269,7 +272,7 @@
             if (cnt != 0) {
                 dump_result = dump_result + ","
             }
-            dump_result = dump_result + dump_json(val)
+            dump_result = dump_result + dump@JSON(val)
         loop
         dump_result = dump_result + "]"
         return dump_result
@@ -331,6 +334,14 @@
         newmod child, Json_Array
         parse_r json_data_, -1, child
         get@Json_Array child, out,0
+        return
+
+    #deffunc get_last_create var out_
+        out_ = last_create_var
+        return
+
+    #deffunc set_last_create var create_
+        last_create_var = create_
         return
 
     #defcfunc local parse_value 
@@ -453,7 +464,8 @@
                 if ( parse_phase = FINDING_KEY ) {
                     dialog "parse error: expext key {}"
                 }
-                insertSpecialR current_container, key, new_nest_kv, JSON_TYPE_OBJECT
+                insert_special current_container, key, JSON_TYPE_OBJECT
+                get_last_create new_nest_kv
                 getValue@JSON_Value_wrapper new_nest_kv, new_nest
                 parse_r json_data, count, new_nest
             } else { // array
@@ -470,7 +482,8 @@
                 if ( parse_phase = FINDING_KEY ) {
                     dialog "parse error: expext key in insert []"
                 }
-                insertSpecialR current_container, key, new_nest_kv, JSON_TYPE_ARRAY
+                insert_special current_container, key, JSON_TYPE_ARRAY
+                get_last_create new_nest_kv
                 getValue@JSON_Value_wrapper new_nest_kv, new_nest
                 parse_r json_data, count, new_nest
             } else { // array
