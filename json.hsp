@@ -40,17 +40,17 @@
 
 #module JSON_TRUE type
     #modinit
-            type = JSON_TYPE_TRUE
+        type = JSON_TYPE_TRUE
         return
 #global
 #module JSON_FALSE type
     #modinit
-            type = JSON_TYPE_FALSE
+        type = JSON_TYPE_FALSE
         return
 #global
 #module JSON_NULL type
     #modinit
-            type = JSON_TYPE_NULL
+        type = JSON_TYPE_NULL
         return
 #global
 
