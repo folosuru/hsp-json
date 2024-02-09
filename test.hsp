@@ -1,0 +1,46 @@
+#include "json.hsp"
+
+parse@JSON data, {"{
+    "name" : "Taro",
+    "age" : 13 
+}"}
+json_start_foreach loop_var
+repeat
+if (foreach_object(data,key, val,loop_var) = 0) { break }
+print key + " => " + val
+loop
+
+get@JSON_Object data, out, "name"
+print out
+
+
+newmod a,JSON_Object
+val = 21
+insertPrimitiveValue a, "apple", val
+
+val = 5
+insertPrimitiveValue a, "banana", val
+
+insertMap a, "lemon"
+get@JSON_Object a, lemon_map, "lemon"
+
+
+val = "hoge"
+insertPrimitiveValue lemon_map, "peach", val
+
+get@JSON_Object lemon_map, result, "peach"
+print "peach  =>" + result
+
+get@JSON_Object a, out, "apple"
+print "apple  =>" + out
+
+print "----parse test----"
+parse@JSON out2, "{\"fuga\" : 13,\"AB\": \"hoge\" , \"EF\" : [ { \"hoge\" : \"fuga\" }, \"piyo\", 13 ]}"
+json_start_foreach loop_var
+repeat
+if (foreach_object(out2,key, val,loop_var) = 0) { break }
+    print "" +key+ "=>" + val
+loop
+parse@JSON out3 , dump@JSON(out2)
+print dump@JSON(out3)
+print "-"
