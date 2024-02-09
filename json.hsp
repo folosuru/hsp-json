@@ -218,7 +218,7 @@
         element_count = 0
         return
 
-    #modfunc pushSpecialValue int push_type_id_
+    #modfunc push_special int push_type_id_
         newmod child, JsonArrayChild
         if (push_type_id_ = JSON_TYPE_OBJECT) {
             create_JSON_Map child(element_count)
@@ -324,10 +324,17 @@
         return element_count
 
     #defcfunc dump_json_container var mod_
-        if (getJsonContainerType(mod_) = JSON_TYPE_OBJECT) { // object
+        var_type = getJsonContainerType(mod_)
+        if (var_type = JSON_TYPE_OBJECT) { // object
             return dump_json_map@JSON_Object(mod_)
-        } else : if (getJsonContainerType(mod_) = JSON_TYPE_ARRAY) {
+        } else : if (var_type = JSON_TYPE_ARRAY) {
             return dump_json_array@Json_Array(mod_)
+        } else : if (var_type = JSON_TYPE_NULL) {
+            return "null"
+        } else : if (var_type = JSON_TYPE_TRUE) {
+            return "true"
+        } else : if (var_type = JSON_TYPE_FALSE) {
+            return "false"
         }
         return         
     #deffunc json_start_foreach var loop_val
@@ -420,9 +427,27 @@
                 return int(string_buf) * minus_flag
             }
         }
+        dialog strmid(json_data,count-2,10) + "\n  ^~~~~~~~~~\nunexpected"
         stop
 
-    // parent: container
+
+    
+    #defcfunc local isKeyword var count_add
+        trim_4_char = strmid(json_data, count,4)
+        if (trim_4_char = "null") {
+            count_add = 3
+            return JSON_TYPE_NULL
+        }
+        if (trim_4_char = "true") {
+            count_add = 3
+            return JSON_TYPE_TRUE
+        }
+        if (strmid(json_data, count, 5) = "false") {
+            count_add = 4
+            return JSON_TYPE_FALSE
+        }
+        return 0
+
     #deffunc local parse_r str json_str_, int count_, var current_, local current_container
         json_data = json_str_
         current_container = current_
@@ -476,7 +501,7 @@
                     getValue@JSON_Value_wrapper new_nest_kv, new_nest
                     parse_r json_data, count, new_nest
                 } else { // array
-                    pushSpecialValue current_container, JSON_TYPE_OBJECT
+                    push_special current_container, JSON_TYPE_OBJECT
                     get@Json_Array current_container, new_nest, stat
                     parse_r json_data, count, new_nest
                 }
@@ -501,7 +526,7 @@
                     getValue@JSON_Value_wrapper new_nest_kv, new_nest
                     parse_r json_data, count, new_nest
                 } else { // array
-                    pushSpecialValue current_container, JSON_TYPE_ARRAY
+                    push_special current_container, JSON_TYPE_ARRAY
                     get@Json_Array current_container, new_nest, stat
                     parse_r json_data, count, new_nest
                 }
@@ -519,19 +544,33 @@
             }
             break
         }
+        
 
-        read_str = parse_value()
         if (getJsonContainerType(current_container) = JSON_TYPE_OBJECT) {
             if (parse_phase = FINDING_KEY) {
-                key = read_str
+                key = parse_value()
                 parse_phase = FINDINF_CORON
             } else {
-                insertPrimitiveValue current_container, key, read_str
+                keyword_type =  isKeyword(add_cnt)
+                if (keyword_type = 0) {
+                    read_str = parse_value()
+                    insertPrimitiveValue current_container, key, read_str
+                } else {
+                    insert_special current_container, key, keyword_type
+                    count = count + add_cnt
+                }
                 parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
                 continue
             }
         } else {
-            pushPrimitiveValue current_container, read_str
+            keyword_type =  isKeyword(add_cnt)
+            if (keyword_type = 0) {
+                read_str = parse_value()
+                pushPrimitiveValue current_container, read_str
+            } else {
+                push_special current_container, keyword_type
+                count = count + add_cnt
+            }
             parse_phase = FINGING_COMMA_OR_BRACKET_CLOSE
         }
         loop
